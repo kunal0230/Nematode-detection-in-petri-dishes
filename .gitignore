@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Project Specific
+augmented_worm_data/
+augmented_data_final/
+processed_data_sliced/
+processed_data/
+results_*.png
+*.pth
+training_history.png
+loss_curve_m1.png
+raw_data/
+!raw_data/.keep

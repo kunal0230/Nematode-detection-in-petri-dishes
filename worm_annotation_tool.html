@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worm Annotation Tool - Interactive Labeler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 0;
+            min-height: 700px;
+        }
+
+        .sidebar {
+            background: #f7fafc;
+            padding: 20px;
+            border-right: 2px solid #e2e8f0;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+            font-size: 18px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .tool-button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #cbd5e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-button:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .tool-button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .canvas-container {
+            background: #1a202c;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #annotationCanvas {
+            border: 3px solid #4a5568;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .info-panel {
+            background: #f7fafc;
+            padding: 20px;
+            border-left: 2px solid #e2e8f0;
+            overflow-y: auto;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+            font-size: 18px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .annotation-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .annotation-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .annotation-item h4 {
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .annotation-item p {
+            font-size: 12px;
+            color: #4a5568;
+            margin: 3px 0;
+        }
+
+        .delete-btn {
+            background: #fc8181;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-top: 8px;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #f56565;
+            transform: scale(1.05);
+        }
+
+        .stats-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stats-box h4 {
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .stats-box p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin: 5px 0;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px;
+            background: #48bb78;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .file-input-label:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .export-btn {
+            width: 100%;
+            padding: 12px;
+            background: #ed8936;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+        }
+
+        .controls {
+            margin-top: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .instructions {
+            background: #fff5f5;
+            border: 2px solid #feb2b2;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #742a2a;
+        }
+
+        .instructions h4 {
+            margin-bottom: 10px;
+            color: #c53030;
+        }
+
+        .instructions ul {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: #e2e8f0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .zoom-btn {
+            background: white;
+            border: 1px solid #cbd5e0;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: #cbd5e0;
+            color: #2d3748;
+        }
+
+        .zoom-level {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2d3748;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .canvas-wrapper {
+            overflow: auto;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            background: #1a202c;
+            /* Match container bg */
+        }
+
+        #annotationCanvas {
+            margin: auto;
+            display: block;
+            border: 3px solid #4a5568;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Worm Annotation Tool</h1>
+            <p>Manual labeling tool for C. elegans / Nematode detection training data</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Left Sidebar - Tools -->
+            <div class="sidebar">
+                <h3>Tools</h3>
+
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="adjustZoom(-0.1)">-</button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="zoom-btn" onclick="adjustZoom(0.1)">+</button>
+                    <button class="zoom-btn" onclick="resetZoom()"
+                        style="width: auto; padding: 0 8px; font-size: 12px;">Reset</button>
+                </div>
+
+                <div class="file-input-wrapper">
+                    <input type="file" id="imageUpload" accept="image/*">
+                    <label for="imageUpload" class="file-input-label">
+                        Load Image
+                    </label>
+                </div>
+
+                <button class="tool-button active" id="boxTool" onclick="selectTool('box')">
+                    Bounding Box
+                </button>
+
+                <button class="tool-button" id="polygonTool" onclick="selectTool('polygon')">
+                    Polygon
+                </button>
+
+                <button class="tool-button" id="pointTool" onclick="selectTool('point')">
+                    Point
+                </button>
+
+                <button class="tool-button" onclick="clearCanvas()">
+                    Clear All
+                </button>
+
+                <button class="tool-button" onclick="undoLast()">
+                    Undo
+                </button>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <label>Annotation Color</label>
+                        <input type="color" id="annotationColor" value="#00ff00">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Line Width: <span id="lineWidthValue">2</span></label>
+                        <input type="range" id="lineWidth" min="1" max="5" value="2"
+                            oninput="document.getElementById('lineWidthValue').textContent = this.value">
+                    </div>
+
+                    <div class="control-group">
+                        <label>Opacity: <span id="opacityValue">0.7</span></label>
+                        <input type="range" id="opacity" min="0.1" max="1" step="0.1" value="0.7"
+                            oninput="document.getElementById('opacityValue').textContent = this.value; redrawCanvas()">
+                    </div>
+                </div>
+
+                <button class="export-btn" onclick="exportAnnotations()">
+                    Export COCO JSON
+                </button>
+
+                <button class="export-btn" onclick="exportYOLO()">
+                    Export YOLO Format
+                </button>
+            </div>
+
+            <!-- Center - Canvas -->
+            <div class="canvas-container">
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <canvas id="annotationCanvas" width="800" height="600"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Info -->
+            <div class="info-panel">
+                <div class="instructions">
+                    <h4>Instructions</h4>
+                    <ul>
+                        <li><strong>Box:</strong> Click & drag to draw rectangle</li>
+                        <li><strong>Polygon:</strong> Click to add points, double-click to finish</li>
+                        <li><strong>Point:</strong> Click to mark center</li>
+                        <li><strong>Delete:</strong> Click delete on annotation item</li>
+                    </ul>
+                </div>
+
+                <div class="stats-box">
+                    <h4>Statistics</h4>
+                    <p>Total Annotations: <strong><span id="totalAnnotations">0</span></strong></p>
+                    <p>Boxes: <strong><span id="boxCount">0</span></strong></p>
+                    <p>Polygons: <strong><span id="polygonCount">0</span></strong></p>
+                    <p>Points: <strong><span id="pointCount">0</span></strong></p>
+                </div>
+
+                <h3>Annotations</h3>
+                <div id="annotationList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('annotationCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let currentTool = 'box';
+        let annotations = [];
+        let currentAnnotation = null;
+        let isDrawing = false;
+        let startX, startY;
+        let loadedImage = null;
+        let polygonPoints = [];
+        let currentZoom = 1.0;
+
+        function adjustZoom(delta) {
+            setZoom(currentZoom + delta);
+        }
+
+        function setZoom(zoom) {
+            currentZoom = Math.min(Math.max(0.1, zoom), 5.0); // Limit zoom between 0.1x and 5x
+
+            // Update UI
+            document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+
+            // Apply scale using CSS width/height
+            // This ensures layout flows correctly (scrollbars appear) and centering works via margin: auto
+            canvas.style.width = `${canvas.width * currentZoom}px`;
+            canvas.style.height = `${canvas.height * currentZoom}px`;
+        }
+
+        function resetZoom() {
+            setZoom(1.0);
+        }
+
+        // Load image
+        document.getElementById('imageUpload').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = new Image();
+                    img.onload = function () {
+                        loadedImage = img;
+
+                        // Resize canvas to fit image (max 800x600)
+                        const maxWidth = 800;
+                        const maxHeight = 600;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth || height > maxHeight) {
+                            const ratio = Math.min(maxWidth / width, maxHeight / height);
+                            width = width * ratio;
+                            height = height * ratio;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        resetZoom(); // Reset zoom and update CSS dimensions
+                        redrawCanvas();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function selectTool(tool) {
+            currentTool = tool;
+
+            // Update UI
+            document.querySelectorAll('.tool-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tool + 'Tool').classList.add('active');
+
+            // Reset polygon if switching tools
+            if (tool !== 'polygon') {
+                polygonPoints = [];
+            }
+        }
+
+        // Canvas event listeners
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('dblclick', handleDoubleClick);
+
+        function handleMouseDown(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Calculate scale based on displayed size vs internal size
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            if (currentTool === 'box') {
+                isDrawing = true;
+                startX = x;
+                startY = y;
+                currentAnnotation = {
+                    type: 'box',
+                    x: x,
+                    y: y,
+                    width: 0,
+                    height: 0,
+                    label: 'worm'
+                };
+            } else if (currentTool === 'polygon') {
+                polygonPoints.push({ x, y });
+                redrawCanvas();
+            } else if (currentTool === 'point') {
+                annotations.push({
+                    type: 'point',
+                    x: x,
+                    y: y,
+                    label: 'worm'
+                });
+                redrawCanvas();
+                updateAnnotationList();
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (!isDrawing || currentTool !== 'box') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            currentAnnotation.width = x - startX;
+            currentAnnotation.height = y - startY;
+
+            redrawCanvas();
+
+            // Draw current box
+            ctx.strokeStyle = document.getElementById('annotationColor').value;
+            ctx.lineWidth = document.getElementById('lineWidth').value;
+            ctx.strokeRect(currentAnnotation.x, currentAnnotation.y,
+                currentAnnotation.width, currentAnnotation.height);
+        }
+
+        function handleMouseUp(e) {
+            if (currentTool === 'box' && isDrawing) {
+                isDrawing = false;
+
+                // Only save if box has area
+                if (Math.abs(currentAnnotation.width) > 5 && Math.abs(currentAnnotation.height) > 5) {
+                    // Normalize negative dimensions
+                    if (currentAnnotation.width < 0) {
+                        currentAnnotation.x += currentAnnotation.width;
+                        currentAnnotation.width = Math.abs(currentAnnotation.width);
+                    }
+                    if (currentAnnotation.height < 0) {
+                        currentAnnotation.y += currentAnnotation.height;
+                        currentAnnotation.height = Math.abs(currentAnnotation.height);
+                    }
+
+                    annotations.push(currentAnnotation);
+                    updateAnnotationList();
+                }
+
+                currentAnnotation = null;
+                redrawCanvas();
+            }
+        }
+
+        function handleDoubleClick(e) {
+            if (currentTool === 'polygon' && polygonPoints.length >= 3) {
+                annotations.push({
+                    type: 'polygon',
+                    points: [...polygonPoints],
+                    label: 'worm'
+                });
+                polygonPoints = [];
+                redrawCanvas();
+                updateAnnotationList();
+            }
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw image
+            if (loadedImage) {
+                ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            const color = document.getElementById('annotationColor').value;
+            const lineWidth = document.getElementById('lineWidth').value;
+            const opacity = document.getElementById('opacity').value;
+
+            // Draw all annotations
+            annotations.forEach((ann, idx) => {
+                ctx.strokeStyle = color;
+                ctx.fillStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.globalAlpha = opacity;
+
+                if (ann.type === 'box') {
+                    ctx.strokeRect(ann.x, ann.y, ann.width, ann.height);
+                    ctx.fillStyle = color;
+                    ctx.globalAlpha = 0.2;
+                    ctx.fillRect(ann.x, ann.y, ann.width, ann.height);
+                    ctx.globalAlpha = opacity;
+
+                    // Draw label
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText(`${ann.label} #${idx + 1}`, ann.x, ann.y - 5);
+                } else if (ann.type === 'polygon') {
+                    ctx.beginPath();
+                    ctx.moveTo(ann.points[0].x, ann.points[0].y);
+                    for (let i = 1; i < ann.points.length; i++) {
+                        ctx.lineTo(ann.points[i].x, ann.points[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+
+                    ctx.globalAlpha = 0.2;
+                    ctx.fill();
+                    ctx.globalAlpha = opacity;
+
+                    // Draw label
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText(`${ann.label} #${idx + 1}`, ann.points[0].x, ann.points[0].y - 5);
+                } else if (ann.type === 'point') {
+                    ctx.beginPath();
+                    ctx.arc(ann.x, ann.y, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Draw label
+                    ctx.fillStyle = color;
+                    ctx.font = 'bold 14px Arial';
+                    ctx.fillText(`${ann.label} #${idx + 1}`, ann.x + 10, ann.y - 5);
+                }
+            });
+
+            // Draw current polygon in progress
+            if (currentTool === 'polygon' && polygonPoints.length > 0) {
+                ctx.strokeStyle = color;
+                ctx.fillStyle = color;
+                ctx.globalAlpha = 1;
+
+                polygonPoints.forEach(point => {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+
+                if (polygonPoints.length > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(polygonPoints[0].x, polygonPoints[0].y);
+                    for (let i = 1; i < polygonPoints.length; i++) {
+                        ctx.lineTo(polygonPoints[i].x, polygonPoints[i].y);
+                    }
+                    ctx.stroke();
+                }
+            }
+
+            ctx.globalAlpha = 1;
+        }
+
+        function updateAnnotationList() {
+            const list = document.getElementById('annotationList');
+            list.innerHTML = '';
+
+            let boxCount = 0, polygonCount = 0, pointCount = 0;
+
+            annotations.forEach((ann, idx) => {
+                if (ann.type === 'box') boxCount++;
+                else if (ann.type === 'polygon') polygonCount++;
+                else if (ann.type === 'point') pointCount++;
+
+                const item = document.createElement('div');
+                item.className = 'annotation-item';
+
+                let details = '';
+                if (ann.type === 'box') {
+                    details = `Position: (${Math.round(ann.x)}, ${Math.round(ann.y)})<br>
+                               Size: ${Math.round(ann.width)} × ${Math.round(ann.height)}`;
+                } else if (ann.type === 'polygon') {
+                    details = `Points: ${ann.points.length}`;
+                } else if (ann.type === 'point') {
+                    details = `Position: (${Math.round(ann.x)}, ${Math.round(ann.y)})`;
+                }
+
+                item.innerHTML = `
+                    <h4>${ann.label} #${idx + 1} (${ann.type})</h4>
+                    <p>${details}</p>
+                    <button class="delete-btn" onclick="deleteAnnotation(${idx})">Delete</button>
+                `;
+                list.appendChild(item);
+            });
+
+            // Update stats
+            document.getElementById('totalAnnotations').textContent = annotations.length;
+            document.getElementById('boxCount').textContent = boxCount;
+            document.getElementById('polygonCount').textContent = polygonCount;
+            document.getElementById('pointCount').textContent = pointCount;
+        }
+
+        function deleteAnnotation(idx) {
+            annotations.splice(idx, 1);
+            redrawCanvas();
+            updateAnnotationList();
+        }
+
+        function clearCanvas() {
+            if (confirm('Clear all annotations?')) {
+                annotations = [];
+                polygonPoints = [];
+                redrawCanvas();
+                updateAnnotationList();
+            }
+        }
+
+        function undoLast() {
+            if (annotations.length > 0) {
+                annotations.pop();
+                redrawCanvas();
+                updateAnnotationList();
+            }
+        }
+
+        function exportAnnotations() {
+            if (!loadedImage) {
+                alert('Please load an image first!');
+                return;
+            }
+
+            const cocoFormat = {
+                info: {
+                    description: "Worm Detection Dataset",
+                    version: "1.0",
+                    year: 2026,
+                    date_created: new Date().toISOString()
+                },
+                licenses: [{
+                    id: 1,
+                    name: "Custom",
+                    url: ""
+                }],
+                images: [{
+                    id: 1,
+                    width: canvas.width,
+                    height: canvas.height,
+                    file_name: "annotated_image.jpg",
+                    license: 1,
+                    date_captured: new Date().toISOString()
+                }],
+                annotations: [],
+                categories: [{
+                    id: 1,
+                    name: "worm",
+                    supercategory: "animal"
+                }]
+            };
+
+            annotations.forEach((ann, idx) => {
+                const annotation = {
+                    id: idx + 1,
+                    image_id: 1,
+                    category_id: 1,
+                    iscrowd: 0
+                };
+
+                if (ann.type === 'box') {
+                    annotation.bbox = [ann.x, ann.y, ann.width, ann.height];
+                    annotation.area = ann.width * ann.height;
+                    annotation.segmentation = [[
+                        ann.x, ann.y,
+                        ann.x + ann.width, ann.y,
+                        ann.x + ann.width, ann.y + ann.height,
+                        ann.x, ann.y + ann.height
+                    ]];
+                } else if (ann.type === 'polygon') {
+                    const flatPoints = ann.points.flatMap(p => [p.x, p.y]);
+                    annotation.segmentation = [flatPoints];
+
+                    // Calculate bbox from polygon
+                    const xs = ann.points.map(p => p.x);
+                    const ys = ann.points.map(p => p.y);
+                    const minX = Math.min(...xs);
+                    const minY = Math.min(...ys);
+                    const maxX = Math.max(...xs);
+                    const maxY = Math.max(...ys);
+                    annotation.bbox = [minX, minY, maxX - minX, maxY - minY];
+                    annotation.area = (maxX - minX) * (maxY - minY);
+                }
+
+                cocoFormat.annotations.push(annotation);
+            });
+
+            const dataStr = JSON.stringify(cocoFormat, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'annotations_coco.json';
+            link.click();
+        }
+
+        function exportYOLO() {
+            if (!loadedImage) {
+                alert('Please load an image first!');
+                return;
+            }
+
+            let yoloText = '';
+
+            annotations.forEach(ann => {
+                if (ann.type === 'box') {
+                    // YOLO format: class_id center_x center_y width height (normalized)
+                    const centerX = (ann.x + ann.width / 2) / canvas.width;
+                    const centerY = (ann.y + ann.height / 2) / canvas.height;
+                    const width = ann.width / canvas.width;
+                    const height = ann.height / canvas.height;
+
+                    yoloText += `0 ${centerX.toFixed(6)} ${centerY.toFixed(6)} ${width.toFixed(6)} ${height.toFixed(6)}\n`;
+                }
+            });
+
+            const blob = new Blob([yoloText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'annotations_yolo.txt';
+            link.click();
+        }
+    </script>
+</body>
+
+</html>
