@@ -226,9 +226,9 @@ Worm Detections on New Images
    │   ├── img_002.jpg
    │   └── ...
    └── labels/
-       ├── img_001.txt
-       ├── img_002.txt
-       └── ...
+   │   ├── img_001.txt
+   │   ├── img_002.txt
+   │   └── ...
    ```
 
 #### Phase 2: Data Augmentation
