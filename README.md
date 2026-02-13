@@ -53,17 +53,17 @@ This pipeline provides a **complete end-to-end solution** for training custom ML
 
 Training on M1 Mac (8GB RAM) using MobileNetV3-SSDLite.
 
-![Training Loss Curve](loss_curve_m1.png)
+![Training Loss Curve](assets/loss_curve_m1.png)
 
 ### 2. Original vs. Prediction
 
 **Original Image (The only training sample):**
 
-![Original Image](raw_data/images/dish_001.png)
+![Original Image](assets/dish_001.png)
 
 **Model Prediction (Unseen augmentation):**
 
-![Prediction Result](prediction_result.png)
+![Prediction Result](assets/prediction_result.png)
 
 ---
 

@@ -40,6 +40,5 @@ processed_data/
 results_*.png
 *.pth
 training_history.png
-loss_curve_m1.png
 raw_data/
 !raw_data/.keep
