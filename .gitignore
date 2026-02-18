@@ -42,3 +42,5 @@ results_*.png
 training_history.png
 raw_data/
 !raw_data/.keep
+results/
+wandb/

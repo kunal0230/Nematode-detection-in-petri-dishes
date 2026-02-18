@@ -1,0 +1,7 @@
+# Worm Detection Dataset
+path: /kaggle/working/yolov8_dataset
+train: train/images
+val: val/images
+
+nc: 1
+names: ['worm']
